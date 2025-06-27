@@ -10,7 +10,6 @@ from sklearn.preprocessing import LabelEncoder
 
 app = FastAPI()
 
-# Add CORS middleware for frontend-backend communication
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,20 +18,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add a root endpoint for health check
 @app.get("/")
 def root():
     return {"status": "ok"}
 
-# Load the trained model
 model = joblib.load("crop_model.pkl")
 
-# Load dataset and fit label encoder for probability mapping
 crop_data = pd.read_csv("crop_recommendation_dataset.csv")
 le = LabelEncoder()
 le.fit(crop_data['label'])
 
-# Define the input schema
 class CropInput(BaseModel):
     N: float
     P: float
@@ -53,10 +48,9 @@ def predict_crop(data: CropInput):
         data.ph,
         data.rainfall
     ]).reshape(1, -1)
-
-    # Get probabilities for all crops
+    
     proba = model.predict_proba(input_data)[0]
-    crop_indices = np.argsort(proba)[::-1][:3]  # Top 3
+    crop_indices = np.argsort(proba)[::-1][:3]  
     crops = le.inverse_transform(crop_indices)
     top_crops = []
     for idx, crop in enumerate(crops):
